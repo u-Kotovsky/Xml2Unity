@@ -1,0 +1,5 @@
+<images>
+	<image name='garage.jpg' new-name='garage.jpg'/>
+	<image name='garageny.jpg' new-name='garageny.jpg'/>
+	<image name='garageny.png' new-name='garageny.jpg' alpha='garageny.gif'/>
+</images>

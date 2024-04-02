@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<library name="Garage">
+    <prop-group name="default">
+        <prop name="Garage">
+            <mesh file="garage.3ds"/>
+        </prop>
+        <prop name="Garage close">
+            <mesh file="garagecl.3ds"/>
+        </prop>
+        <prop name="Garage n">
+            <mesh file="garagena.3ds"/>
+        </prop>
+        <prop name="Garage n close">
+            <mesh file="garagenc.3ds"/>
+        </prop>
+        <prop name="Garage Old">
+            <mesh file="garageos.3ds"/>
+		</prop>
+        <prop name="Garage Old Winter">
+            <mesh file="garageow.3ds"/>
+		</prop>
+        <prop name="Garage New Year">
+            <mesh file="garageny.3ds">
+              <texture name="GarageNY" diffuse-map="garageny.png"/>
+          </mesh>
+      </prop>
+  </prop-group>
+</library>
