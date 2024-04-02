@@ -11,13 +11,13 @@ namespace Xml2Unity.Editor
 {
     public class Xml2Unity : EditorWindow
     {
-        private const string MAIN_PATH = "Assets/Xml2Unity/Resources/";
-        private const string NAME = "XML2Unity";
-        private const float SCALE = 0.005f;
+        private const string MainPath = "Assets/Xml2Unity/Resources/"; // Don't use hardocded paths
+        private const string Name = "XML2Unity";
+        private const float Scale = 0.005f;
 
         public static bool debugText;
-        public static bool colliders;
-        public static bool deleteUseless;
+        //public static bool colliders; // Could be accessed from other scripts when building map?
+        //public static bool deleteUseless;
 
         private string _currentXml = "";
         private int _currentXmlIndex = 0;
@@ -42,24 +42,29 @@ namespace Xml2Unity.Editor
         private void OnGUI()
         {
             EditorGUILayout.BeginHorizontal();
-            SearchXmlButton();
-            ClearXmlButton();
+            if (GUILayout.Button("Load xmls")) SearchXmls();
+            if (GUILayout.Button("Clear xmls")) ClearXmls();
             EditorGUILayout.EndHorizontal();
-            RefreshXmlLog();
+            
+            EditorGUILayout.LabelField($"({_currentXmlIndex}/{_maps.Count}): {_currentXml}");
             RefreshXmlIndex();
-            DebugTextToggle();
+            debugText = EditorGUILayout.Toggle("Debug:", debugText);
 
             EditorGUILayout.BeginHorizontal();
             _overwriteLatestBuild = EditorGUILayout.Toggle("Overwrite latest build?:", _overwriteLatestBuild);
-            deleteUseless = EditorGUILayout.Toggle("delete useless", deleteUseless);
-            colliders = EditorGUILayout.Toggle("add colliders", colliders);
+            //deleteUseless = EditorGUILayout.Toggle("Delete useless", deleteUseless);
+            //colliders = EditorGUILayout.Toggle("Add colliders", colliders);
             EditorGUILayout.EndHorizontal();
 
             if (_latestBuild != null)
             {
                 EditorGUILayout.BeginHorizontal();
                 BuildXmlButton();
-                DeleteMapButton();
+                if (GUILayout.Button("Delete latest build"))
+                {
+                    DestroyImmediate(_latestBuild);
+                    _latestBuild = null;
+                }
                 EditorGUILayout.EndHorizontal();
             }
             else
@@ -81,7 +86,7 @@ namespace Xml2Unity.Editor
 
         private void ReplaceAllGroup()
         {
-            EditorGUILayout.LabelField("Replace example with other gameobject");
+            EditorGUILayout.LabelField("Replace example with other GameObject");
             EditorGUILayout.BeginHorizontal();
             _replaceExample = EditorGUILayout.ObjectField(_replaceExample, typeof(GameObject), true) as GameObject;
             _replaceWith = EditorGUILayout.ObjectField(_replaceWith, typeof(GameObject), true) as GameObject;
@@ -89,6 +94,16 @@ namespace Xml2Unity.Editor
 
             if (GUILayout.Button("Replace All"))
             {
+                if (_replaceExample == null)
+                {
+                    Debug.LogError($"Replace example is null!");
+                    return;
+                }
+                if (_replaceWith == null)
+                {
+                    Debug.LogError($"Replace with is null!");
+                    return;
+                }
                 var name = _replaceExample.name;
                 foreach (Transform child in _latestBuild.transform)
                 {
@@ -116,68 +131,39 @@ namespace Xml2Unity.Editor
             }
         }
 
-        private void RefreshXmlLog()
-        {
-            EditorGUILayout.LabelField($"({_currentXmlIndex}/{_maps.Count}): {_currentXml}");
-        }
-        private void DebugTextToggle()
-        {
-            debugText = EditorGUILayout.Toggle("Debug:", debugText);
-        }
-
         private void RefreshXmlIndex()
         {
             _currentXmlIndex = EditorGUILayout.Popup(_currentXmlIndex, _maps.ToArray(), new GUILayoutOption[] { });
             _currentXml = _maps.Count - 1 > _currentXmlIndex ? _maps[_currentXmlIndex] : _maps[0];
         }
 
-        private void ClearXmlButton()
-        {
-            if (GUILayout.Button("Clear maps"))
-            {
-                ClearXmls();
-            }
-        }
-
-        private void SearchXmlButton()
-        {
-            if (GUILayout.Button("Load xmls"))
-            {
-                SearchXmls();
-            }
-        }
-
-        private void DeleteMapButton()
-        {
-            if (GUILayout.Button("Delete latest build"))
-            {
-                DestroyImmediate(_latestBuild);
-                _latestBuild = null;
-            }
-        }
-
         private void BuildXmlButton()
         {
             if (GUILayout.Button("Build"))
             {
-                if (_overwriteLatestBuild && _latestBuild != null) DestroyImmediate(_latestBuild); 
+                if (_overwriteLatestBuild && _latestBuild != null)
+                {
+                    //Undo.RecordObject(_latestBuild, $"Destroy {_latestBuild.name}");
+                    DestroyImmediate(_latestBuild);
+                }
             
                 var str1 = _currentXml.Split("/");
                 if (str1.Length < 2)
                 {
-                    Debug.LogError($"[{NAME}:BuildXmlButton] Failed to find selected xml");
+                    Debug.LogError($"[{Name}:BuildXmlButton] Failed to find selected xml");
                     return;
                 }
             
                 var str = _currentXml.Split("/")[3].Split("_v")[1];
                 if (!int.TryParse(str, out var version))
                 {
-                    Debug.LogError($"[{NAME}:BuildXmlButton] Failed to find version of the xml");
+                    Debug.LogError($"[{Name}:BuildXmlButton] Failed to find version of the xml");
                     return;
                 }
             
-                Debug.Log($"[{NAME}:BuildXmlButton] Xml version: {str}");
+                Debug.Log($"[{Name}:BuildXmlButton] Xml version: {str}");
                 _latestBuild = LoadXml(version, _currentXml);
+                //Undo.RecordObject(_latestBuild, $"update {_latestBuild.name}");
             }
         }
 
@@ -185,16 +171,16 @@ namespace Xml2Unity.Editor
         {
             _maps.Clear();
             _maps.Add("None");
-            Debug.Log($"[{NAME}:ClearXmls] Xmls cleared!");
+            Debug.Log($"[{Name}:ClearXmls] Xmls cleared!");
         }
 
         private void SearchXmls()
         {
             ClearXmls();
-            Debug.Log($"{MAIN_PATH}Maps_v0/");
-            SearchXmlInDirectory(MAIN_PATH + "Maps_v0/");
-            SearchXmlInDirectory(MAIN_PATH + "Maps_v1/");
-            Debug.Log($"[{NAME}:SearchXmls] Xmls are loaded!");
+            Debug.Log($"{MainPath}Maps_v0/");
+            SearchXmlInDirectory(MainPath + "Maps_v0/");
+            SearchXmlInDirectory(MainPath + "Maps_v1/");
+            Debug.Log($"[{Name}:SearchXmls] Xmls are loaded!");
             RefreshXmlIndex();
         }
 
@@ -223,7 +209,7 @@ namespace Xml2Unity.Editor
             try
             {
                 var libs = Directory
-                    .GetDirectories($"{MAIN_PATH}Library_v{version}/")
+                    .GetDirectories($"{MainPath}Library_v{version}/")
                     .Select(directory => new Library(directory))
                     .ToList();
                 ParseXml(map, path, libs);
@@ -250,7 +236,7 @@ namespace Xml2Unity.Editor
             var staticGeometry = xRoot["static-geometry"];
             if (staticGeometry != null)
             {
-                Debug.Log($"[{NAME}:ParseXml] Parsing static geometry..");
+                Debug.Log($"[{Name}:ParseXml] Parsing static geometry..");
                 foreach (XmlElement prop in staticGeometry)
                     ParseProp(map, prop, libs);
                 
@@ -261,7 +247,7 @@ namespace Xml2Unity.Editor
             var collisionGeometry = xRoot["collision-geometry"];
             if (collisionGeometry != null)
             {
-                Debug.Log($"[{NAME}:ParseXml] Parsing collision geometry..");
+                Debug.Log($"[{Name}:ParseXml] Parsing collision geometry..");
                 
             }
             
@@ -303,7 +289,7 @@ namespace Xml2Unity.Editor
             var spawnPoints = xRoot["spawn-points"];
             if (spawnPoints != null)
             {
-                Debug.Log($"[{NAME}:ParseXml] Parsing spawn points..");
+                Debug.Log($"[{Name}:ParseXml] Parsing spawn points..");
                 
             }
                 
@@ -311,7 +297,7 @@ namespace Xml2Unity.Editor
             var bonusRegions = xRoot["bonus-region"];
             if (bonusRegions != null)
             {
-                Debug.Log($"[{NAME}:ParseXml] Parsing bonus regions..");
+                Debug.Log($"[{Name}:ParseXml] Parsing bonus regions..");
                 foreach (XmlElement region in bonusRegions)
                 {
                     Vector3 position = GetVector3(region["position"]);
@@ -351,7 +337,7 @@ namespace Xml2Unity.Editor
             var ctfFlags = xRoot["ctf-flags"];
             if (ctfFlags != null)
             {
-                Debug.Log($"[{NAME}:ParseXml] Parsing ctf flags..");
+                Debug.Log($"[{Name}:ParseXml] Parsing ctf flags..");
                 Vector3? flagRed = null;
                 Vector3? flagBlue = null;
 
@@ -367,25 +353,25 @@ namespace Xml2Unity.Editor
                             flagBlue = GetVector3(ctfFlag);
                             break;
                         default:
-                            Debug.LogError($"[{NAME}:ParseXml] Unknown ctf flag {ctfFlag.Name}");
+                            Debug.LogError($"[{Name}:ParseXml] Unknown ctf flag {ctfFlag.Name}");
                             break;
                     }
                 }
 
                 if (flagRed.HasValue)
                 {
-                    Debug.Log($"[{NAME}:ParseXml] new position for red flag: {flagRed.Value.x} {flagRed.Value.y} {flagRed.Value.z}");
+                    Debug.Log($"[{Name}:ParseXml] new position for red flag: {flagRed.Value.x} {flagRed.Value.y} {flagRed.Value.z}");
                 }
 
                 if (flagBlue.HasValue)
                 {
-                    Debug.Log($"[{NAME}:ParseXml] new position for blue flag: {flagBlue.Value.x} {flagBlue.Value.y} {flagBlue.Value.z}");
+                    Debug.Log($"[{Name}:ParseXml] new position for blue flag: {flagBlue.Value.x} {flagBlue.Value.y} {flagBlue.Value.z}");
                 }
             }
 
             // Apply correct scaling
-             map.transform.localScale = new Vector3(SCALE, SCALE, SCALE); 
-            Debug.Log($"[{NAME}:ParseXml] Map parsed");
+             map.transform.localScale = new Vector3(Scale, Scale, Scale); 
+            Debug.Log($"[{Name}:ParseXml] Map parsed");
         }
 
         public static void ParseProp(GameObject map, XmlElement prop, IEnumerable<Library> libs)
@@ -420,7 +406,7 @@ namespace Xml2Unity.Editor
                         }
                         break;
                     default:
-                        Debug.LogWarning($"[{NAME}:ParseProp] Unknown element name: {element.Name} = {element.Value}");
+                        Debug.LogWarning($"[{Name}:ParseProp] Unknown element name: {element.Name} = {element.Value}");
                         break;
                 }
             }
@@ -460,7 +446,7 @@ namespace Xml2Unity.Editor
                             z = float.Parse(paramChild.Value, CultureInfo.InvariantCulture);
                             break;
                         default:
-                            Debug.LogError($"[{NAME}:GetVector3] Unknown param name: {param.Name}");
+                            Debug.LogError($"[{Name}:GetVector3] Unknown param name: {param.Name}");
                             break;
                     }
                 }
@@ -493,7 +479,7 @@ namespace Xml2Unity.Editor
                             z = float.Parse(paramChild.Value, CultureInfo.InvariantCulture);
                             break;
                         default:
-                            Debug.LogWarning($"[{NAME}:GetQuaternion] Unknown param name: {param.Name}");
+                            Debug.LogWarning($"[{Name}:GetQuaternion] Unknown param name: {param.Name}");
                             break;
                     }
                 }

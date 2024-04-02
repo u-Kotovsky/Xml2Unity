@@ -1,5 +1,5 @@
 ﻿namespace Xml2Unity.Editor
-{
+{ // Outdated
     public class PropElement
     {
         public string name; // (file)

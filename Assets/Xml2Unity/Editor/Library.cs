@@ -2,15 +2,12 @@
 using System.Linq;
 using System.Xml;
 using JetBrains.Annotations;
-using Mesh = Xml2Unity.Editor.Mesh;
-using Sprite = Xml2Unity.Editor.Sprite;
-using Texture = Xml2Unity.Editor.Texture;
 
 namespace Xml2Unity.Editor
 {
     public class Library
     {
-        private const string NAME = "XML2ULib";
+        private const string Name = "XML2ULib";
         public string libraryName;
         public List<Prop> props;
         public string path;

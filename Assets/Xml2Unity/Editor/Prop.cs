@@ -9,8 +9,8 @@ namespace Xml2Unity.Editor
 {
     public class Prop
     {
-        private const string NAME = "XML2UProp";
-        private const string MAIN_PATH = "Assets/Xml2Unity/Resources/";
+        private const string Name = "XML2UProp";
+        private const string MainPath = "Assets/Xml2Unity/Resources/"; // Don't use hardocded paths
         public readonly string libraryName;
         public readonly string groupName; // (Tiles)
         public readonly string propName; // (Tile 1x1)
@@ -68,9 +68,9 @@ namespace Xml2Unity.Editor
                         UnityEngine.Texture texture = null;
                         if (textureName != "")
                         {
-                            var _mesh = meshes.FirstOrDefault(mesh1 => mesh1.textures.Any(texture => texture.name == textureName));
-                            var _tex = _mesh.textures.FirstOrDefault(texture => texture.name == textureName);
-                            var texturePath = $"{path}/{string.Join(".", _tex.diffuse_map.Split('.').Take(1))}";
+                            var @default = meshes.FirstOrDefault(mesh1 => mesh1.textures.Any(texture1 => texture1.name == textureName));
+                            var tex = @default.textures.FirstOrDefault(texture1 => texture1.name == textureName);
+                            var texturePath = $"{path}/{string.Join(".", tex.diffuse_map.Split('.').Take(1))}";
                             texture = Resources.Load<UnityEngine.Texture>(texturePath);
                         } else {
                             texture = meshRenderer.sharedMaterial.GetTexture(MainTex);
